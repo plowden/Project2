@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Mission to Mars</title>
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+</head>
+
+<body>
+  <div class="container">
+    <div class="jumbotron text-center">
+      <h1>Mission to Mars</h1>
+      <p><a class="btn btn-primary btn-lg" href="/scrape" role="button">Scrape New Data</a></p>
+    </div>
+  </div>
+
+  <div class="container">
+    <div class="row" id="mars_r1">
+      <!-- Mars News -->
+      <div class="col-md-6">
+        <h2 class="heading">Latest Mars News</h2>
+      </div>
+    </div>
+    <div class="row" id="mars_data_news">
+      <div class="col-md-12">
+        <h5 class="heading">{{ mars_data['mars_news_title'] }}</h5>
+        <small>{{ mars_data['mars_news_teaser'] }}</small>
+        <br><br>
+      </div>
+    </div>
+    <div class="row" id="mars_r2">
+      <!-- Mars Featured Image -->
+      <div class="col-md-8">
+        <img width = "600" src="{{ mars_data['featured_image_url'] }}" alt="Featured Image">
+      </div>
+      <div class="col-md-4">
+        <div class="row" id="mars_r3">
+          <h5 class="heading">Current Weather on Mars</h5>
+          <small>{{ mars_data['tweet'] }}</small>
+          <br><br>
+        </div>
+        <div class="row" id="mars_r4">
+          <h5 class="heading">Mars Facts</h5>
+          <br>
+          {{ mars_data['facts'] | safe }}
+          <br>
+        </div>
+      </div>
+    </div>
+    <div class="row" id="mars_r5">
+      <br><br><hr><br><br>
+    </div>
+    <div class="row" id="mars_r5">
+      <div class="col-md-12">
+        <div class="row" id="mars_r6">
+          <div class="col-md-6">
+            <img width = "400" src="{{ mars_data['hemispheres'][0]['img_url'] }}">
+            <h5 class="heading">{{ mars_data['hemispheres'][0]['title'] }}</h5>
+          </div>
+          <div class="col-md-6">
+            <img width = "400" src="{{ mars_data['hemispheres'][1]['img_url'] }}">
+            <h5 class="heading">{{ mars_data['hemispheres'][1]['title'] }}</h5>
+          </div>
+        </div>
+        <div class="row" id="mars_r7">
+          <div class="col-md-6">
+            <img width = "400" src="{{ mars_data['hemispheres'][2]['img_url'] }}">
+            <h5 class="heading">{{ mars_data['hemispheres'][2]['title'] }}</h5>
+          </div>
+          <div class="col-md-6">
+            <img width = "400" src="{{ mars_data['hemispheres'][3]['img_url'] }}">
+            <h5 class="heading">{{ mars_data['hemispheres'][3]['title'] }}</h5>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+
+</html>
+
