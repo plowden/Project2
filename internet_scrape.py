@@ -10,14 +10,35 @@ from flask_pymongo import PyMongo
 import pymongo
 import requests
 import time
+import calendar
+import datetime
 import re
 
 # Create variable for Webex data dictionary
 webex_data = {}
 
+# Calculates the hours in a month.
+# Usage: get_hours("January 2020") or get_hours("Current")
+def get_hours(month):
+    months = ["January", "February", "March", "April", "May", "June",
+            "July", "August", "September", "October", "November", "December"]
+    month_list = re.split(r'\s', month)
+    month = month_list[0]
+    if month == "Current":
+        year = datetime.datetime.today().strftime("%Y")
+        days = int(datetime.datetime.today().strftime("%d"))
+    else:
+        year = month_list[1]
+        days = calendar.monthrange(int(year),int(months.index(month))+1)[1]
+    hours = days * 24
+    return hours
+
 def init_browser():
-    executable_path = {"executable_path": "/usr/local/bin/geckodriver"}
-    return Browser("firefox", **executable_path, headless=False)
+    #executable_path = {"executable_path": "/usr/local/bin/geckodriver"}
+    #return Browser("firefox", **executable_path, headless=False)
+    executable_path = {'executable_path': '/usr/local/bin/chromedriver'}
+    return Browser('chrome', **executable_path, headless=False)
+
 
 def scrape_webex():
     browser = init_browser()
@@ -51,12 +72,7 @@ def scrape_webex():
             iframe_html = iframe.html
             iframe_soup = bs(iframe_html, "html.parser")
             months.append(iframe_soup.find('span', id=month_id).get_text())
-            #print(f'iframe_soup: {iframe_soup}')
-            #hosts.append(iframe_soup.find('span', id='hostData'))
             hosts_commas.append(re.search('title=\"(.*)\"', str(iframe_soup.find('span', id='hostData'))).group(1))
-            #hosts = ''.join(map(str, hosts))
-            #hosts = hosts.replace(",", "")
-
             participants_commas.append(re.search('title=\"(.*)\"', str(iframe_soup.find('span', id='participantData'))).group(1))
             countries.append(re.search('title=\"(.*)\"', str(iframe_soup.find('span', id='countryData'))).group(1))
             meetings_commas.append(re.search('title=\"(.*)\"', str(iframe_soup.find('span', id='meetingData'))).group(1))
@@ -75,7 +91,7 @@ def scrape_webex():
     participants = [s.replace(',', '') for s in participants_commas]
     meetings = [s.replace(',', '') for s in meetings_commas]
     
-    webex = {
+    webex_days = {
         "months": months,
         "hosts": hosts,
         "participants": participants,
@@ -83,12 +99,35 @@ def scrape_webex():
         "meetings": meetings,
         "minutes": minutes
     }
+    webex_hours = {
+        "months": [],
+        "hosts": [],
+        "participants": [],
+        "countries": [],
+        "meetings": [],
+        "minutes": []
+    }
     
     # Close the browser after scraping
     browser.quit()
 
+    # Convert to hours
+    hours = []
+    for i in webex_days["months"]:
+        hours_month = get_hours(i)
+        hours.append(int(hours_month))
+
+    for i in range(3):
+        webex_hours["hosts"].append(round(int(webex_days["hosts"][i]) / hours[i]))
+        webex_hours["participants"].append(round(int(webex_days["participants"][i]) / hours[i]))
+        webex_hours["meetings"].append(round(int(webex_days["meetings"][i]) / hours[i]))
+        webex_hours["minutes"].append(round(int(webex_days["minutes"][i]) / hours[i]))
+
+    webex_hours["countries"] = webex_days["countries"]
+    webex_hours["months"] = webex_days["months"]
+
     # Return results
-    return webex
+    return webex_hours
 
 # Create an instance of Flask
 app = Flask(__name__)
