@@ -16,6 +16,8 @@
     <div class="jumbotron text-center">
       <h1>COVID-19 and Working from Home with Webex</h1>
       <p><a class="btn btn-primary btn-lg" href="/webex" role="button">Scrape New Data</a></p>
+      <h3>Most recent scrape timestamp: {{ webex_data.timestamp }} UTC</h3>
+      <h5><a target="_blank" href="https://map.webex.com/">Source Data</a></h5>
     </div>
   </div>
   <div class="container">
@@ -56,7 +58,7 @@
                 mode: 'single',
                 callbacks: {
                   label: function(tooltipItems, data) {
-                           return tooltipItems.yLabel + ' hosts';
+                           return tooltipItems.yLabel + ' minutes';
                   }
                 }
               },
@@ -109,37 +111,37 @@
         </script>
       </div>
     </div>
-    <div class="row" id="countries-meetings">
+    <div class="row" id="hosts-meetings">
       <div class="col-md-6">
-        <h2 class="heading" align="center">Countries</h2>
-        <canvas id="countries-chart" width="600" height="400"></canvas>
+        <h2 class="heading" align="center">Hosts</h2>
+        <canvas id="hosts-chart" width="600" height="400"></canvas>
         <script>
-          var countriesChartData = {
+          var hostsChartData = {
             labels : [{% for item in webex_data.months %}
                        "{{item}}",
                       {% endfor %}],
             datasets : [{
-                label: "Number of Countries",
+                label: "Number of Hosts per Hour",
                 fill: true,
                 backgroundColor: ["blue","red","rgba(75,192,192,0.4)"],
                 borderColor: "rgba(75,192,192,1)",
                 pointHoverBackgroundColor: "rgba(75,192,192,1)",
                 pointHoverBorderColor: "rgba(220,220,220,1)",
                 pointHoverBorderWidth: 2,
-                data : [{% for item in webex_data.countries %}
+                data : [{% for item in webex_data.hosts %}
                           {{item}},
                         {% endfor %}],
             }]
           }
 
           // get chart canvas
-          var ctx = document.getElementById("countries-chart");
+          var ctx = document.getElementById("hosts-chart");
 
           // create the chart using the chart canvas
-          var countriesChart = new Chart(ctx, {
+          var hostsChart = new Chart(ctx, {
             responsive: true,
             type: 'bar',
-            data: countriesChartData,
+            data: hostsChartData,
             options: {
               tooltips: {
                 enabled: true,
@@ -190,7 +192,7 @@
                 mode: 'single',
                 callbacks: {
                   label: function(tooltipItems, data) {
-                           return tooltipItems.yLabel + ' hosts';
+                           return tooltipItems.yLabel + ' meetings';
                   }
                 }
               },
@@ -203,7 +205,6 @@
 
   <!-- Footer-->
   <div id="footer">
-    <a target="_blank" href="https://map.webex.com/">Source Data</a>
   </div>
   <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js" integrity="sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49" crossorigin="anonymous"></script>

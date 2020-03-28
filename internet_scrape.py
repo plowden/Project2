@@ -33,13 +33,14 @@ def get_hours(month):
     hours = days * 24
     return hours
 
+# Use Chrome by default; uncomment first two lines/comment last two lines  to use Firefox.
 def init_browser():
     #executable_path = {"executable_path": "/usr/local/bin/geckodriver"}
     #return Browser("firefox", **executable_path, headless=False)
     executable_path = {'executable_path': '/usr/local/bin/chromedriver'}
     return Browser('chrome', **executable_path, headless=False)
 
-
+# Scrapes the data.
 def scrape_webex():
     browser = init_browser()
 
@@ -66,6 +67,7 @@ def scrape_webex():
     minutes = []
 
     for month_id in month_ids:
+        # The data to scrape is in an iframe.
         with browser.get_iframe('meetingMap') as iframe:
             iframe.click_link_by_id(month_id)
             time.sleep(5)
@@ -77,6 +79,7 @@ def scrape_webex():
             countries.append(re.search('title=\"(.*)\"', str(iframe_soup.find('span', id='countryData'))).group(1))
             meetings_commas.append(re.search('title=\"(.*)\"', str(iframe_soup.find('span', id='meetingData'))).group(1))
             
+            # The minutes are in reverse order, so we have to turn them around.
             mins = []
             num = 11
             while num > 0:
@@ -87,25 +90,32 @@ def scrape_webex():
             mins_string = ''.join(map(str, mins))
             minutes.append(mins_string)
                 
+    # These numbers have commas, which we have to remove.
     hosts =[s.replace(',', '') for s in hosts_commas]
     participants = [s.replace(',', '') for s in participants_commas]
     meetings = [s.replace(',', '') for s in meetings_commas]
-    
+   
+    # The data is ready, but the units are days; we want hourly rates so we
+    # can compare the current (incomplete) month to the two previous months.. 
     webex_days = {
         "months": months,
         "hosts": hosts,
         "participants": participants,
         "countries": countries,
         "meetings": meetings,
-        "minutes": minutes
+        "minutes": minutes,
+        "timestamp": datetime.datetime.strftime(datetime.datetime.utcnow(),'%m/%d/%y %H:%M:%S')
     }
+
+    # Declare a dictionary to hold the hourly rates so we don't have to change webex_days.
     webex_hours = {
         "months": [],
         "hosts": [],
         "participants": [],
         "countries": [],
         "meetings": [],
-        "minutes": []
+        "minutes": [],
+        "timestamp": ""
     }
     
     # Close the browser after scraping
@@ -125,6 +135,7 @@ def scrape_webex():
 
     webex_hours["countries"] = webex_days["countries"]
     webex_hours["months"] = webex_days["months"]
+    webex_hours["timestamp"] = webex_days["timestamp"]
 
     # Return results
     return webex_hours
@@ -139,10 +150,9 @@ mongo = PyMongo(app, uri="mongodb://localhost:27017/webex")
 @app.route("/")
 def home():
 
-    # Find one record of data from the mongo database
-    #destination_data = mongo.db.collection.find_one()
-    webex_data = mongo.db.collection.find_one()
-
+    # Find the most recent record of data from the mongo database
+    webex_data = mongo.db.webex.find(sort=[('timestamp', pymongo.DESCENDING)], limit=1).next()
+    # Print it to the screen.
     print(f'{webex_data}')
     # Return template and data
     return render_template("index.html", webex_data=webex_data)
@@ -161,11 +171,16 @@ def webex():
       'participants': webex_data['participants'],
       'countries': webex_data['countries'],
       'meetings': webex_data['meetings'],
-      'minutes': webex_data['minutes']
+      'minutes': webex_data['minutes'],
+      'timestamp': webex_data['timestamp']
     }
 
-    # Update the Mongo database using update and upsert=True
-    mongo.db.collection.update({}, webex_data, upsert=True)
+    # Update the Mongo database using insert_one
+    try:
+        mongo.db.webex.insert_one(webex_data)
+    except Exception as e:
+        print(e)
+
 
     # Redirect back to home page
     return redirect("/", code=302)
